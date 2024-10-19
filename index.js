@@ -18,7 +18,11 @@ app.use(cookieParser());
 
 const PORT = process.env.PORT || 8080;
 
-app.use("/", router);
+app.get("/", (req, res) => {
+  res.send("This is a Chatify API.");
+});
+
+app.use("/api", router);
 
 connectDB().then(() => {
   app.listen(PORT, () => {
