@@ -4,21 +4,20 @@ const searchUser = async (req, res) => {
   try {
     const { search } = req.body;
 
-    if (!search) {
-      return res
-        .status(400)
-        .json({ success: false, message: "Search term is required." });
-    }
+    const query = search
+      ? {
+          $or: [
+            { name: new RegExp(search, "i") },
+            { email: new RegExp(search, "i") },
+          ],
+        }
+      : {};
 
-    const query = new RegExp(search, "i");
-
-    const user = await UserModel.find({
-      $or: [{ name: query }, { email: query }],
-    }).select("-password")
+    const users = await UserModel.find(query).select("-password");
 
     return res.json({
       success: true,
-      data: user,
+      data: users,
     });
   } catch (error) {
     return res.status(500).json({ message: error.message });
