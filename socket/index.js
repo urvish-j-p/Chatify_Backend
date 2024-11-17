@@ -7,6 +7,7 @@ const {
   ConversationModel,
   MessageModel,
 } = require("../models/ConversationModel");
+const getConversation = require("../helpers/getConversation");
 
 const app = express();
 
@@ -58,7 +59,7 @@ io.on("connection", async (socket) => {
       .populate("messages")
       .sort({ updatedAt: -1 });
 
-    socket.emit("message", getConversationMessage?.messages);
+    socket.emit("message", getConversationMessage?.messages || []);
   });
 
   socket.on("newMessage", async (data) => {
@@ -118,12 +119,53 @@ io.on("connection", async (socket) => {
       .populate("messages")
       .sort({ updatedAt: -1 });
 
-    io.to(data?.sender).emit("message", getConversationMessage?.messages);
-    io.to(data?.receiver).emit("message", getConversationMessage?.messages);
+    io.to(data?.sender).emit("message", getConversationMessage?.messages || []);
+    io.to(data?.receiver).emit(
+      "message",
+      getConversationMessage?.messages || []
+    );
   });
 
+  //sidebar
+  socket.on("sidebar", async (currentUserId) => {
+    const conversation = await getConversation(currentUserId);
+
+    socket.emit("conversation", conversation);
+  });
+
+  socket.on("seen", async (msgByUserId) => {
+    let conversation = await ConversationModel.findOne({
+      $or: [
+        {
+          sender: user?._id,
+          receiver: msgByUserId,
+        },
+        {
+          sender: msgByUserId,
+          receiver: user?._id,
+        },
+      ],
+    });
+
+    const convMsgIds = conversation?.messages || [];
+
+    await MessageModel.updateMany(
+      { _id: { $in: convMsgIds }, msgByUserId: msgByUserId },
+      {
+        $set: { seen: true },
+      }
+    );
+
+    const senderConv = await getConversation(user?._id?.toString());
+    const receiverConv = await getConversation(msgByUserId);
+
+    io.to(user?._id?.toString()).emit("conversation", senderConv);
+    io.to(msgByUserId).emit("conversation", receiverConv);
+  });
+
+  //disconnect
   socket.on("disconnect", () => {
-    onlineUser.delete(user?._id);
+    onlineUser.delete(user?._id?.toString());
   });
 });
 
