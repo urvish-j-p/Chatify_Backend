@@ -13,8 +13,8 @@ const app = express();
 
 const server = http.createServer(app);
 const io = new Server(server, {
-  pingInterval: 10000, // Send a ping every 10 seconds
-  pingTimeout: 5000, // Disconnect if no response after 5 seconds
+  pingInterval: 25000, // 25 seconds between pings
+  pingTimeout: 60000, // Disconnect after 60 seconds of no response
   cors: {
     origin: [process.env.FRONTEND_URL, "http://localhost:5173", "https://chatify-by-urvish.vercel.app"],
     credentials: true,
@@ -41,7 +41,7 @@ io.on("connection", async (socket) => {
       return;
     }
 
-    const userId = user._id.toString();
+    const userId = user?._id?.toString();
     socket.join(userId);
 
     onlineUser.add(userId);
