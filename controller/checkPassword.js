@@ -25,8 +25,8 @@ const checkPassword = async (req, res) => {
 
     const cookieOption = {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "strict",
+      secure: process.env.NODE_ENV === "production" && req.headers['x-forwarded-proto'] === "https",
+      sameSite: process.env.NODE_ENV === "production" ? "strict" : "lax",
     };
 
     return res
