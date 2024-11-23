@@ -19,7 +19,7 @@ app.use(cookieParser());
 const PORT = process.env.PORT || 8080;
 
 app.get("/", (req, res) => {
-  res.send("This is a Chatify API.");
+  res.send("This is a root route of Chatify!");
 });
 
 app.use("/api", router);
