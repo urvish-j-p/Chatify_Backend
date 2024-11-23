@@ -19,14 +19,14 @@ const checkPassword = async (req, res) => {
       email: user.email,
     };
 
-    const token = await jwt.sign(tokenData, process.env.JWT_SECRET_KEY, {
+    const token = jwt.sign(tokenData, process.env.JWT_SECRET_KEY, {
       expiresIn: "1d",
     });
 
     const cookieOption = {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production" && req.headers['x-forwarded-proto'] === "https",
-      sameSite: process.env.NODE_ENV === "production" ? "strict" : "lax",
+      secure: process.env.NODE_ENV === "production", 
+      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax", 
     };
 
     return res
