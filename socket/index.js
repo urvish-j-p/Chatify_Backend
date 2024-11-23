@@ -13,8 +13,6 @@ const app = express();
 
 const server = http.createServer(app);
 const io = new Server(server, {
-  pingInterval: 25000, // 25 seconds between pings
-  pingTimeout: 60000, // Disconnect after 60 seconds of no response
   cors: {
     origin: [process.env.FRONTEND_URL, "http://localhost:5173", "https://chatify-by-urvish.vercel.app"],
     credentials: true,
@@ -26,38 +24,12 @@ const onlineUser = new Set();
 io.on("connection", async (socket) => {
   const token = socket.handshake.auth.token;
 
-  if (!token) {
-    console.error("No token provided in handshake");
-    socket.disconnect(true); 
-    return;
-  }
+  const user = await getUserDetailFromToken(token);
 
-  let user;
-  try {
-    user = await getUserDetailFromToken(token); 
-    if (!user) {
-      console.error("Invalid token or user not found");
-      socket.disconnect(true); 
-      return;
-    }
-
-    const userId = user?._id?.toString();
-    socket.join(userId);
-
-    onlineUser.add(userId);
-    io.emit("onlineUser", Array.from(onlineUser));
-
-    console.log(`User ${userId} connected`);
-  } catch (error) {
-    console.error("Error validating token:", error.message);
-    socket.disconnect(true); 
-    return;
-  }
-
-  // //create a room
-  // socket.join(user?._id?.toString());
-  // onlineUser.add(user?._id?.toString());
-  // io.emit("onlineUser", Array.from(onlineUser));
+  //create a room
+  socket.join(user?._id?.toString());
+  onlineUser.add(user?._id?.toString());
+  io.emit("onlineUser", Array.from(onlineUser));
 
   socket.on("messagePage", async (userId) => {
     const userDetails = await UserModel.findById(userId).select("-password");
